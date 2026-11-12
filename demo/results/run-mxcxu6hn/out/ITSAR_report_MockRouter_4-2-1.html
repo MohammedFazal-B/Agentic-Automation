@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ITSAR Compliance Assessment Report — MockRouter</title>
+<style>
+ :root { --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --accent:#0b6bcb;
+          --pass:#15803d; --fail:#b91c1c; --warn:#b45309; }
+ * { box-sizing:border-box; }
+ body { margin:0; padding:48px 24px 96px; background:#f8fafc; color:var(--ink);
+         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif; }
+ main { max-width:1040px; margin:0 auto; background:#fff; padding:56px 64px;
+         border:1px solid var(--line); border-radius:14px;
+         box-shadow:0 1px 2px rgba(15,23,42,.06),0 12px 32px -12px rgba(15,23,42,.12); }
+ h1 { font-size:30px; line-height:1.25; margin:0 0 20px; letter-spacing:-.02em; }
+ h2 { font-size:21px; margin:40px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--line);
+       letter-spacing:-.01em; }
+ h3 { font-size:17px; margin:28px 0 8px; color:#1e293b; }
+ h4 { font-size:15px; margin:20px 0 6px; color:var(--muted); text-transform:uppercase;
+       letter-spacing:.06em; }
+ p, li { color:#1e293b; }
+ ul { padding-left:22px; }
+ table { width:100%; border-collapse:collapse; margin:14px 0 22px; font-size:13.5px; }
+ th { text-align:left; background:#f1f5f9; font-weight:600; padding:9px 11px;
+       border-bottom:1px solid var(--line); vertical-align:bottom; }
+ td { padding:9px 11px; border-bottom:1px solid var(--line); vertical-align:top; }
+ tr:last-child td { border-bottom:none; }
+ code { background:#f1f5f9; padding:1px 5px; border-radius:4px; font-size:.9em;
+         font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+ figure { margin:18px 0; }
+ img { max-width:100%; border:1px solid var(--line); border-radius:8px; display:block; }
+ figcaption { font-size:12.5px; color:var(--muted); margin-top:6px; }
+ hr { border:none; border-top:1px solid var(--line); margin:34px 0; }
+ .tag { display:inline-block; padding:1px 7px; border-radius:999px; font-size:12px;
+         font-weight:600; letter-spacing:.02em; }
+ .pass { color:var(--pass); } .fail { color:var(--fail); } .ns { color:var(--warn); }
+ footer { max-width:1040px; margin:18px auto 0; color:var(--muted); font-size:12px; }
+ @media print { body { background:#fff; padding:0; } main { border:none; box-shadow:none; padding:0; } }
+</style></head>
+<body><main>
+<h1>ITSAR Compliance Assessment Report</h1>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Device under test</td><td><strong>MockRouter</strong></td></tr><tr><td>Firmware under test</td><td>4.2.1</td></tr><tr><td>Device family</td><td>Router</td></tr><tr><td>Management address</td><td>https://192.0.2.1</td></tr><tr><td>Credential reference</td><td><code>placeholder</code> (secret not stored)</td></tr><tr><td>Assessment standard</td><td>ITSAR placeholder</td></tr><tr><td>Standard version</td><td>n/a</td></tr><tr><td>Assessment basis</td><td>Placeholder input; exploratory automated run (not an approved assessment)</td></tr><tr><td>Report generated</td><td>2026-11-12T09:45:10.410+00:00</td></tr><tr><td>Report ID</td><td>ITSAR-MockRouter-4.2.1</td></tr></tbody></table>
+<h2>1. Executive summary</h2>
+<p>1 scenario(s) were executed against <strong>MockRouter</strong> running firmware <strong>4.2.1</strong>. <strong>1</strong> passed, <strong>0</strong> failed, <strong>0</strong> were recorded as not supported by this firmware. Automated compliance for the tested scope is <strong>100.0%</strong>. This is a heuristic prototype result, not a compliance determination.</p>
+<table><thead><tr><th>Result</th><th>Scenarios</th><th>Share</th></tr></thead><tbody><tr><td>pass</td><td>1</td><td>100%</td></tr></tbody></table>
+<p>PROTOTYPE ONLY: synthetic inputs and mock results must not be used as evidence of ITSAR compliance. Criteria matching is heuristic and requires expert validation.</p>
+<h2>2. Scope and methodology</h2>
+<ul><li><strong>Phase 1 — preconditions.</strong> The prototype attempted catalogue-supported probes and remediation.</li><li><strong>Phase 2 — dry run.</strong> The prototype attempts read-only discovery; inspect the job log for results.</li><li><strong>Phase 3 — execution.</strong> Scenario jobs and attempted state locks are recorded; their sufficiency is not independently validated.</li><li><strong>Phase 4 — reuse.</strong> Family reuse is experimental; consult the job log for what actually ran.</li><li><strong>Evidence policy.</strong> The prototype rejects certain recognisable error text and failed locks; this is not a guarantee of screenshot correctness.</li></ul>
+<h2>3. Results by clause</h2>
+<table><thead><tr><th>Clause</th><th>Scenario</th><th>Verdict</th><th>Evidence</th><th>Basis</th></tr></thead><tbody><tr><td>1</td><td>1</td><td><strong>PASS</strong></td><td>1 artefact(s)</td><td>1 pass criteria evaluated, 1 met</td></tr></tbody></table>
+<h2>4. Detailed findings</h2>
+<h3>Clause 1 / 1 — Inspect SSH</h3>
+<p><strong>Verdict:</strong> PASS  ·  <strong>Requirement:</strong> Demonstration only; not an actual ITSAR requirement.</p>
+<h4>Pass criteria</h4>
+<table><thead><tr><th>Criterion</th><th>Met</th><th>Matched evidence terms</th></tr></thead><tbody><tr><td>ssh protocol version 2.0</td><td>yes</td><td>protocol, version</td></tr></tbody></table>
+<h4>Executed steps</h4>
+<table><thead><tr><th>#</th><th>Step</th><th>Tool / op</th><th>Outcome</th><th>Heals</th></tr></thead><tbody><tr><td>1</td><td>show ssh</td><td><code>cli/show</code></td><td>pass</td><td>0</td></tr></tbody></table>
+<h4>Evidence</h4>
+<figure><img src="data:image/png;base64,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" alt="Job JOB-MockRouter-1-1-EXECUTE-20261112T094510Z-1AC6A3 · captured 2026-11-12T09:45:10.395+00:00 · lock terminal_regex (/(?i)ssh/ matched: &#x27;SSH&#x27;) · sha256 a6f0cb1eb8041235…"/><figcaption>Job JOB-MockRouter-1-1-EXECUTE-20261112T094510Z-1AC6A3 · captured 2026-11-12T09:45:10.395+00:00 · lock terminal_regex (/(?i)ssh/ matched: &#x27;SSH&#x27;) · sha256 a6f0cb1eb8041235…</figcaption></figure>
+<h2>5. Self-healing and deviations</h2>
+<p>No plan deviations occurred during this assessment.</p>
+<h2>6. Automation assets produced</h2>
+<table><thead><tr><th>Scenario</th><th>Device</th><th>Firmware</th><th>Version</th><th>Origin</th><th>File</th></tr></thead><tbody><tr><td>1</td><td>MockRouter</td><td>4.2.1</td><td><strong>v1</strong></td><td>authored</td><td><code>scenario_1_v1_MockRouter.py</code></td></tr></tbody></table>
+<h2>7. Evidence integrity annex</h2>
+<table><thead><tr><th>Scenario</th><th>Artefact</th><th>Lock verified</th><th>Lock detail</th><th>SHA-256 (prefix)</th></tr></thead><tbody><tr><td>1</td><td>step01_a6f0cb1eb8.png</td><td>terminal_regex</td><td>/(?i)ssh/ matched: &#x27;SSH&#x27;</td><td><code>a6f0cb1eb8041235675037a1…</code></td></tr></tbody></table>
+<hr/>
+<h2>8. Declaration</h2>
+<p>The results in this report were produced by automated execution against MockRouter (firmware 4.2.1) using the Job IDs recorded in the assessment database. Every verdict is traceable to a job, a plan version, and stored evidence where available. Independent verification is required.</p>
+<table><thead><tr><th>Role</th><th>Name</th><th>Date</th></tr></thead><tbody><tr><td>Assessor</td><td></td><td></td></tr><tr><td>Reviewer</td><td></td><td></td></tr><tr><td>Approver</td><td></td><td></td></tr></tbody></table>
+</main>
+<footer>Generated 2026-11-12T09:45:10.420+00:00 by the ITSAR Compliance Agent. Evidence hashes in this report are
+SHA-256 of the stored artefacts; any edit invalidates them.</footer>
+</body></html>

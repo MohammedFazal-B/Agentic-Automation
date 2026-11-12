@@ -1,0 +1,32 @@
+{
+  "device": {
+    "model": "MockRouter",
+    "firmware": "4.2.1",
+    "host": "192.0.2.1",
+    "mgmt_protocol": "https"
+  },
+  "generated": "2026-11-12T08:21:10.948+00:00",
+  "counts": {
+    "pass": 1
+  },
+  "compliance_pct": 100.0,
+  "verdicts": [
+    {
+      "clause_no": "1",
+      "scenario_no": "1",
+      "result": "pass",
+      "job_id": "JOB-MockRouter-1-1-EXECUTE-20261112T082110Z-2430AF",
+      "notes": "1 pass criteria evaluated, 1 met"
+    }
+  ],
+  "scripts": [
+    {
+      "id": 1,
+      "device_id": 1,
+      "scenario_id": 1,
+      "version": 1,
+      "file_path": "/home/user/itsar-agent/demo/results/run-_3k0m62k/out/scenario_1_v1_MockRouter.py"
+    }
+  ],
+  "rejected_captures": 0
+}

@@ -1,0 +1,152 @@
+"""Minimal dependency-free PNG writer with a 5x7 bitmap font.
+
+Why this exists: evidence artefacts must be real image files that a reviewer
+can open, and the harness must not require Pillow/Playwright to produce them in
+dev mode. In production the browser adapter returns a genuine PNG from Chrome;
+this module renders the *terminal* and *mock screen* evidence.
+"""
+from __future__ import annotations
+
+import struct
+import zlib
+
+# 5x7 glyphs, one byte per row (bits 4..0). Covers what device CLIs emit.
+_FONT: dict[str, tuple[int, ...]] = {
+    "A": (0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11), "B": (0x1E, 0x11, 0x11, 0x1E, 0x11, 0x11, 0x1E),
+    "C": (0x0E, 0x11, 0x10, 0x10, 0x10, 0x11, 0x0E), "D": (0x1C, 0x12, 0x11, 0x11, 0x11, 0x12, 0x1C),
+    "E": (0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F), "F": (0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x10),
+    "G": (0x0E, 0x11, 0x10, 0x17, 0x11, 0x11, 0x0F), "H": (0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11),
+    "I": (0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x1F), "J": (0x07, 0x02, 0x02, 0x02, 0x02, 0x12, 0x0C),
+    "K": (0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11), "L": (0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F),
+    "M": (0x11, 0x1B, 0x15, 0x15, 0x11, 0x11, 0x11), "N": (0x11, 0x19, 0x15, 0x13, 0x11, 0x11, 0x11),
+    "O": (0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E), "P": (0x1E, 0x11, 0x11, 0x1E, 0x10, 0x10, 0x10),
+    "Q": (0x0E, 0x11, 0x11, 0x11, 0x15, 0x12, 0x0D), "R": (0x1E, 0x11, 0x11, 0x1E, 0x14, 0x12, 0x11),
+    "S": (0x0F, 0x10, 0x10, 0x0E, 0x01, 0x01, 0x1E), "T": (0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04),
+    "U": (0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E), "V": (0x11, 0x11, 0x11, 0x11, 0x11, 0x0A, 0x04),
+    "W": (0x11, 0x11, 0x11, 0x15, 0x15, 0x1B, 0x11), "X": (0x11, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x11),
+    "Y": (0x11, 0x11, 0x0A, 0x04, 0x04, 0x04, 0x04), "Z": (0x1F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x1F),
+    "0": (0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E), "1": (0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E),
+    "2": (0x0E, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1F), "3": (0x1F, 0x02, 0x04, 0x02, 0x01, 0x11, 0x0E),
+    "4": (0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02), "5": (0x1F, 0x10, 0x1E, 0x01, 0x01, 0x11, 0x0E),
+    "6": (0x06, 0x08, 0x10, 0x1E, 0x11, 0x11, 0x0E), "7": (0x1F, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08),
+    "8": (0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E), "9": (0x0E, 0x11, 0x11, 0x0F, 0x01, 0x02, 0x0C),
+    " ": (0, 0, 0, 0, 0, 0, 0), ".": (0, 0, 0, 0, 0, 0x0C, 0x0C), ",": (0, 0, 0, 0, 0x0C, 0x04, 0x08),
+    ":": (0, 0x0C, 0x0C, 0, 0x0C, 0x0C, 0), ";": (0, 0x0C, 0x0C, 0, 0x0C, 0x04, 0x08),
+    "-": (0, 0, 0, 0x1F, 0, 0, 0), "_": (0, 0, 0, 0, 0, 0, 0x1F), "/": (0x01, 0x02, 0x02, 0x04, 0x08, 0x08, 0x10),
+    "\\": (0x10, 0x08, 0x08, 0x04, 0x02, 0x02, 0x01), "|": (0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04),
+    ">": (0x10, 0x08, 0x04, 0x02, 0x04, 0x08, 0x10), "<": (0x01, 0x02, 0x04, 0x08, 0x04, 0x02, 0x01),
+    "=": (0, 0, 0x1F, 0, 0x1F, 0, 0), "+": (0, 0x04, 0x04, 0x1F, 0x04, 0x04, 0),
+    "(": (0x02, 0x04, 0x08, 0x08, 0x08, 0x04, 0x02), ")": (0x08, 0x04, 0x02, 0x02, 0x02, 0x04, 0x08),
+    "[": (0x0E, 0x08, 0x08, 0x08, 0x08, 0x08, 0x0E), "]": (0x0E, 0x02, 0x02, 0x02, 0x02, 0x02, 0x0E),
+    "*": (0, 0x0A, 0x04, 0x1F, 0x04, 0x0A, 0), "#": (0x0A, 0x0A, 0x1F, 0x0A, 0x1F, 0x0A, 0x0A),
+    "%": (0x11, 0x02, 0x04, 0x04, 0x08, 0x11, 0), "!": (0x04, 0x04, 0x04, 0x04, 0x04, 0, 0x04),
+    "?": (0x0E, 0x11, 0x01, 0x02, 0x04, 0, 0x04), "'": (0x04, 0x04, 0, 0, 0, 0, 0),
+    '"': (0x0A, 0x0A, 0, 0, 0, 0, 0), "@": (0x0E, 0x11, 0x17, 0x15, 0x17, 0x10, 0x0E),
+}
+
+W, H = 5, 7
+
+
+def _glyph(ch: str) -> tuple[int, ...]:
+    return _FONT.get(ch.upper(), _FONT["?"])
+
+
+class Canvas:
+    def __init__(self, width: int, height: int, bg: tuple[int, int, int] = (18, 20, 26)):
+        self.w, self.h = width, height
+        self.buf = bytearray()
+        for _ in range(width * height):
+            self.buf += bytes(bg)
+
+    def set_px(self, x: int, y: int, rgb: tuple[int, int, int]) -> None:
+        if 0 <= x < self.w and 0 <= y < self.h:
+            i = (y * self.w + x) * 3
+            self.buf[i:i + 3] = bytes(rgb)
+
+    def fill_rect(self, x0: int, y0: int, x1: int, y1: int, rgb: tuple[int, int, int]) -> None:
+        for y in range(max(0, y0), min(self.h, y1)):
+            for x in range(max(0, x0), min(self.w, x1)):
+                self.set_px(x, y, rgb)
+
+    def text(self, x: int, y: int, s: str, rgb: tuple[int, int, int] = (226, 232, 240), scale: int = 2) -> int:
+        cx = x
+        for ch in s:
+            g = _glyph(ch)
+            for ry, bits in enumerate(g):
+                for rx in range(W):
+                    if bits & (1 << (W - 1 - rx)):
+                        for sy in range(scale):
+                            for sx in range(scale):
+                                self.set_px(cx + rx * scale + sx, y + ry * scale + sy, rgb)
+            cx += (W + 1) * scale
+        return cx
+
+    def to_png(self) -> bytes:
+        raw = bytearray()
+        stride = self.w * 3
+        for y in range(self.h):
+            raw.append(0)
+            raw += self.buf[y * stride:(y + 1) * stride]
+
+        def chunk(tag: bytes, data: bytes) -> bytes:
+            return (struct.pack(">I", len(data)) + tag + data
+                    + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF))
+
+        ihdr = struct.pack(">IIBBBBB", self.w, self.h, 8, 2, 0, 0, 0)
+        return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr)
+                + chunk(b"IDAT", zlib.compress(bytes(raw), 6)) + chunk(b"IEND", b""))
+
+
+def render_terminal(lines: list[str], title: str = "", width: int = 900) -> bytes:
+    """Render a CLI transcript as a terminal-styled PNG."""
+    scale = 2
+    char_w = (W + 1) * scale
+    max_cols = max(40, min(110, (width - 40) // char_w))
+    wrapped: list[str] = []
+    if title:
+        wrapped.append(title)
+        wrapped.append("")
+    for line in lines:
+        line = line.rstrip("\n")
+        while len(line) > max_cols:
+            wrapped.append(line[:max_cols])
+            line = line[max_cols:]
+        wrapped.append(line)
+    height = 40 + (len(wrapped) + 2) * (H + 3) * scale
+    c = Canvas(width, height)
+    c.fill_rect(0, 0, width, 28, (32, 36, 46))
+    for i, col in enumerate([(255, 95, 86), (255, 189, 46), (39, 201, 63)]):
+        c.fill_rect(14 + i * 22, 9, 14 + i * 22 + 11, 20, col)
+    c.text(width - 260, 8, "TERMINAL EVIDENCE", (148, 163, 184), scale=1)
+    y = 40
+    for line in wrapped:
+        color = (126, 231, 165) if line.startswith(("$", "#", ">")) else (203, 213, 225)
+        c.text(20, y, line, color, scale=scale)
+        y += (H + 3) * scale
+    return c.to_png()
+
+
+def render_screen(title: str, url: str, body: list[str], width: int = 1000) -> bytes:
+    """Render a browser-page style PNG for GUI evidence."""
+    scale = 2
+    char_w = (W + 1) * scale
+    max_cols = max(40, (width - 60) // char_w)
+    lines: list[str] = []
+    for line in body:
+        while len(line) > max_cols:
+            lines.append(line[:max_cols])
+            line = line[max_cols:]
+        lines.append(line)
+    height = 150 + (len(lines) + 1) * (H + 3) * scale
+    c = Canvas(width, height, (241, 245, 249))
+    c.fill_rect(0, 0, width, 76, (30, 41, 59))
+    c.fill_rect(16, 22, 16 + width - 32, 56, (51, 65, 85))
+    c.text(28, 32, url, (203, 213, 225), scale=1)
+    c.fill_rect(0, 76, width, 132, (255, 255, 255))
+    c.text(24, 92, title, (15, 23, 42), scale=2)
+    c.fill_rect(24, 122, width - 24, 124, (203, 213, 225))
+    y = 148
+    for line in lines:
+        c.text(24, y, line, (30, 41, 59), scale=scale)
+        y += (H + 3) * scale
+    return c.to_png()

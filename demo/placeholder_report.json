@@ -1,0 +1,5 @@
+{
+  "metadata": {"report_id": "SYNTHETIC-NOT-APPROVED", "standard": "ITSAR placeholder"},
+  "preconditions": {"protocols": []},
+  "clauses": [{"clause_no": "1", "title": "Synthetic SSH check", "requirement_text": "Demonstration only; not an actual ITSAR requirement.", "scenarios": [{"scenario_no": "1", "title": "Inspect SSH", "pass_criteria": ["ssh protocol version 2.0"], "steps": [{"action": "show ssh", "expected": "SSH"}]}]}]
+}
